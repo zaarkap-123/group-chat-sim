@@ -1,82 +1,133 @@
-import os
+import random
 import streamlit as st
-from google import genai
-from google.genai import types
 
-# Page setup
+# 1. Page Configuration
 st.set_page_config(
-    page_title="The Group Chat Simulator", 
-    page_icon="📱", 
+    page_title="WhatsApp - Group Chat",
+    page_icon="💬",
     layout="centered"
 )
 
-st.title("📱 The Group Chat Simulator")
-st.caption("Forum Theatre Interactive Tool — Type audience responses to see if they stop the bullying!")
+# 2. Custom CSS to style Streamlit like WhatsApp
+st.markdown("""
+    <style>
+    /* Main Background */
+    .stApp {
+        background-color: #ECE5DD;
+    }
+    
+    /* Hide standard Streamlit header/footer */
+    header {visibility: hidden;}
+    footer {visibility: hidden;}
+    
+    /* WhatsApp Header Banner */
+    .whatsapp-header {
+        background-color: #075E54;
+        color: white;
+        padding: 15px;
+        border-radius: 8px 8px 0 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    
+    .whatsapp-header h3 {
+        margin: 0;
+        color: white !important;
+        font-size: 18px;
+    }
+    
+    .whatsapp-header p {
+        margin: 0;
+        color: #e0e0e0;
+        font-size: 12px;
+    }
 
-# Retrieve API key from Streamlit Secrets or Environment Variable
-api_key = st.secrets.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY")
+    /* Style Chat Input Box */
+    .stChatInputContainer {
+        border-radius: 20px;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-if not api_key:
-    st.error("⚠️ GEMINI_API_KEY not found! Please add it in Streamlit Advanced Settings under Secrets.")
-    st.stop()
+# 3. WhatsApp Header UI
+st.markdown("""
+    <div class="whatsapp-header">
+        <div>
+            <h3>📱 Year 9 Main Group Chat 💬</h3>
+            <p>Jake, Liam, You, and 12 others</p>
+        </div>
+    </div>
+""", unsafe_allow_html=True)
 
-# Initialize Gemini Client
-client = genai.Client(api_key=api_key)
-
-# Initial chat state
+# 4. Initialize Chat History
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {"role": "assistant", "avatar": "👤", "content": "**Jake:** Did you guys see her private story screenshot? 💀"},
         {"role": "assistant", "avatar": "👤", "content": "**Liam:** Fr how does she even post stuff like that... making a meme of it right now 😭"}
     ]
 
-# Display current chat log
+# 5. Display Existing Messages
 for message in st.session_state.messages:
     with st.chat_message(message["role"], avatar=message.get("avatar")):
         st.markdown(message["content"])
 
-# Audience input
+# 6. Response Logic
+def evaluate_intervention(text):
+    text_lower = text.lower()
+    
+    # 1. Topic Hijack / Distraction (VERY EFFECTIVE)
+    if any(word in text_lower for word in ["chem", "homework", "grade", "test", "mr", "teacher", "class", "due", "math", "science"]):
+        responses = [
+            "**Jake:** Wait really? 💀 Is that actually due tomorrow?\n\n**Liam:** Nah leave that, did anyone actually finish Q4?",
+            "**Jake:** Hold up, is the teacher checking that today?\n\n**Liam:** Wait fr? Send me the answers if you have them.",
+            "**Jake:** Wait what grade is that worth again?\n\n**Liam:** Yeah alright, moving past this—someone send the review sheet."
+        ]
+        return random.choice(responses)
+    
+    # 2. Setting Boundaries / Calling Out (EFFECTIVE)
+    elif any(word in text_lower for word in ["mean", "stop", "toxic", "harsh", "leave", "delete", "chill", "enough", "uncool"]):
+        responses = [
+            "**Jake:** Alright chill, it was just banter...\n\n**Liam:** Yeah fine, deleting the meme.",
+            "**Jake:** Wow alright, taking it pretty serious.\n\n**Liam:** Fine, dropping it. Wasn't that deep anyway.",
+            "**Jake:** Okay okay, no need to make it a whole thing.\n\n**Liam:** Yeah whatever, moving on."
+        ]
+        return random.choice(responses)
+    
+    # 3. Humor / Deflection (EFFECTIVE)
+    elif any(word in text_lower for word in ["lol", "joke", "funny", "random", "bro", "lmao", "weird"]):
+        responses = [
+            "**Liam:** Haha alright, moving on.\n\n**Jake:** Anyone wanna play games later instead?",
+            "**Liam:** Lol fair enough.\n\n**Jake:** Yeah anyway, who's online tonight?",
+            "**Liam:** 😂 Alright that was random.\n\n**Jake:** Fr, let's just drop it."
+        ]
+        return random.choice(responses)
+        
+    # 4. Aggressive Pushback (BACKFIRES)
+    elif any(word in text_lower for word in ["shut up", "loser", "hate", "mad", "annoying"]):
+        responses = [
+            "**Jake:** Oh look, someone's mad 😂\n\n**Liam:** Cry about it lol. Making another meme now 💀",
+            "**Jake:** Why are you getting so aggressive?\n\n**Liam:** Fr, nobody was talking to you anyway 💀"
+        ]
+        return random.choice(responses)
+
+    # 5. Weak / Generic / Unclear Tactic (INEFFECTIVE)
+    else:
+        responses = [
+            "**Jake:** Who invited you to the chat? 😂\n\n**Liam:** Imagine being this serious. Bro thinks they're the main character 💀",
+            "**Jake:** Did anyone ask? 💀\n\n**Liam:** Fr why are you being so dramatic right now",
+            "**Jake:** Okay... and?\n\n**Liam:** Bro typed a whole paragraph for nothing 😂"
+        ]
+        return random.choice(responses)
+
+# 7. Audience Input Area
 user_input = st.chat_input("Type audience strategy here...")
 
 if user_input:
-    # 1. Display audience response in the chat UI
     st.session_state.messages.append({"role": "user", "avatar": "🙋", "content": f"**Audience Intervention:** {user_input}"})
-    with st.chat_message("user", avatar="🙋"):
-        st.markdown(f"**Audience Intervention:** {user_input}")
+    bot_reply = evaluate_intervention(user_input)
+    st.session_state.messages.append({"role": "assistant", "avatar": "💬", "content": bot_reply})
+    st.rerun()
 
-    # 2. Instruct the AI how to evaluate the intervention
-    system_instruction = """
-    You are simulating a WhatsApp group chat of 14-year-old teens (Jake and Liam). 
-    They were previously dogpiling on a classmate's screenshot.
-    
-    EVALUATION RULES:
-    1. IF the intervention effectively defuses the situation (e.g., calls out the behavior maturely, redirects to urgent homework/topics, or uses humor to neutralize tension):
-       - Have Jake and Liam back down, agree, or shift focus completely.
-       - The bullying MUST stop.
-    
-    2. IF the intervention is weak, joins in, or aggressively attacks the group:
-       - Have Jake and Liam push back or double down (e.g., "Who asked you?", "Why so serious?").
-    
-    Format output strictly as 1-2 short, realistic group chat messages with character names bolded (e.g., **Jake:** ...).
-    """
-
-    # 3. Call Gemini API
-    try:
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=f"Audience input: {user_input}",
-            config=types.GenerateContentConfig(
-                system_instruction=system_instruction,
-                temperature=0.7,
-            )
-        )
-        bot_reply = response.text
-
-        # Append and display the group's reaction
-        st.session_state.messages.append({"role": "assistant", "avatar": "💬", "content": bot_reply})
-        with st.chat_message("assistant", avatar="💬"):
-            st.markdown(bot_reply)
-
-    except Exception as e:
-        st.error(f"Error generating response: {e}")
-      
